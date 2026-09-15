@@ -292,16 +292,8 @@
 
 <script type="module">
 /* =======================================================================
-   FIREBASE SETUP — paste your project's config below.
-   See SETUP-GUIDE.md for how to get these values (Firebase console →
-   Project settings → your web app → SDK setup and configuration).
+   FIREBASE SETUP — your project's config.
    ======================================================================= */
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBTtOg90uIRO41nkwZzlOlRaC6Ze8jtTH4",
   authDomain: "talent-radar-5a30c.firebaseapp.com",
@@ -310,9 +302,6 @@ const firebaseConfig = {
   messagingSenderId: "982711808631",
   appId: "1:982711808631:web:f2d6c9a2322cacb7684c72"
 };
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
 /* ======================================================================= */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
@@ -327,7 +316,6 @@ import {
 const fbApp = initializeApp(firebaseConfig);
 const auth = getAuth(fbApp);
 const db = getFirestore(fbApp);
-
 if (window.pdfjsLib) {
   window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 }
