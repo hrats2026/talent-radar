@@ -1,0 +1,1013 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Talent Radar</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@700;800&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --bg:#F5F4EF; --surface:#FFFFFF; --surface-2:#ECEAE2; --border:#DEDAD0;
+    --text:#1D2422; --text-muted:#666F6A; --text-faint:#8B928C;
+    --primary:#1F5F5B; --primary-strong:#143F3C; --primary-ink:#FFFFFF;
+    --accent:#C2842A; --accent-soft:#F3E3C7;
+    --good:#2E7D5B; --good-soft:#DEEFE5;
+    --warn:#9A6B12; --warn-soft:#F4E6C9;
+    --info:#2E5FA3; --info-soft:#DCE7F5;
+    --danger:#B3423B; --danger-soft:#F6DEDC;
+    --neutral-soft:#E7E5DD;
+    --shadow: 0 1px 2px rgba(20,30,28,.06), 0 8px 24px -12px rgba(20,30,28,.18);
+    --radius: 14px;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#12161A; --surface:#1B2024; --surface-2:#232A2D; --border:#333B3C;
+      --text:#ECEFED; --text-muted:#A2ABA5; --text-faint:#79817B;
+      --primary:#59B0A7; --primary-strong:#7FCFC5; --primary-ink:#0B1513;
+      --accent:#E3AE57; --accent-soft:#3A2F1A;
+      --good:#6FC79A; --good-soft:#1D3229;
+      --warn:#E0B24B; --warn-soft:#3A2E15;
+      --info:#8FB3E6; --info-soft:#1E2C3E;
+      --danger:#E7897F; --danger-soft:#3B1F1D;
+      --neutral-soft:#2A302E;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px -14px rgba(0,0,0,.6);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#12161A; --surface:#1B2024; --surface-2:#232A2D; --border:#333B3C;
+    --text:#ECEFED; --text-muted:#A2ABA5; --text-faint:#79817B;
+    --primary:#59B0A7; --primary-strong:#7FCFC5; --primary-ink:#0B1513;
+    --accent:#E3AE57; --accent-soft:#3A2F1A;
+    --good:#6FC79A; --good-soft:#1D3229;
+    --warn:#E0B24B; --warn-soft:#3A2E15;
+    --info:#8FB3E6; --info-soft:#1E2C3E;
+    --danger:#E7897F; --danger-soft:#3B1F1D;
+    --neutral-soft:#2A302E;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px -14px rgba(0,0,0,.6);
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--bg); color:var(--text); font-family:"Public Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; -webkit-font-smoothing:antialiased; }
+  h1,h2,h3{ font-family:"Manrope","Public Sans",sans-serif; letter-spacing:-0.01em; text-wrap:balance; }
+  .mono{ font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,monospace; font-variant-numeric:tabular-nums; }
+  a{ color:var(--primary); }
+  button{ font:inherit; }
+  img{ max-width:100%; }
+  [hidden]{ display:none !important; }
+
+  /* Login */
+  .login-wrap{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+  .login-card{ width:min(380px,100%); background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:var(--shadow); padding:30px 26px; display:flex; flex-direction:column; gap:16px; }
+  .login-brand{ display:flex; align-items:center; gap:10px; }
+  .login-mark{ width:36px; height:36px; border-radius:10px; flex:none; background:linear-gradient(155deg,var(--primary),var(--primary-strong)); display:flex; align-items:center; justify-content:center; color:var(--primary-ink); }
+  .login-card h1{ font-size:19px; margin:0; }
+  .login-card p.sub{ margin:2px 0 0; color:var(--text-muted); font-size:13px; }
+  .login-field{ display:flex; flex-direction:column; gap:5px; }
+  .login-field label{ font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--text-faint); }
+  .login-field input{ border:1px solid var(--border); border-radius:9px; padding:10px 12px; background:var(--bg); color:var(--text); font-size:14.5px; outline:none; }
+  .login-field input:focus{ border-color:var(--primary); box-shadow:0 0 0 3px color-mix(in srgb, var(--primary) 22%, transparent); }
+  .login-error{ font-size:12.5px; color:var(--danger); background:var(--danger-soft); padding:9px 11px; border-radius:9px; }
+  .login-msg{ font-size:12.5px; color:var(--good); background:var(--good-soft); padding:9px 11px; border-radius:9px; }
+  .forgot-link{ font-size:12.5px; color:var(--primary); background:none; border:none; cursor:pointer; padding:0; text-align:right; text-decoration:underline; text-underline-offset:2px; }
+  .login-footnote{ font-size:11.5px; color:var(--text-faint); text-align:center; line-height:1.5; }
+
+  /* Shared button / layout primitives (same as before) */
+  .app{ max-width:1080px; margin:0 auto; padding:28px 20px 64px; }
+  .topbar{ display:flex; align-items:center; gap:12px; margin-bottom:26px; flex-wrap:wrap; }
+  .brand{ display:flex; align-items:center; gap:10px; }
+  .brand-mark{ width:36px; height:36px; border-radius:10px; flex:none; background:linear-gradient(155deg,var(--primary),var(--primary-strong)); display:flex; align-items:center; justify-content:center; color:var(--primary-ink); }
+  .brand-name{ font-size:19px; font-weight:800; margin:0; }
+  .brand-tag{ font-size:12.5px; color:var(--text-muted); margin:1px 0 0; }
+  .topbar-spacer{ flex:1; }
+  .stat-pill{ font-size:12.5px; color:var(--text-muted); background:var(--surface-2); border:1px solid var(--border); border-radius:999px; padding:6px 12px; white-space:nowrap; }
+  .stat-pill strong{ color:var(--text); font-weight:700; }
+  .user-chip{ font-size:12px; color:var(--text-faint); white-space:nowrap; }
+  .user-chip strong{ color:var(--text-muted); font-weight:600; }
+
+  .search-zone{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:20px; margin-bottom:22px; display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  .search-input-wrap{ position:relative; flex:1 1 320px; min-width:0; }
+  .search-input-wrap svg{ position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--text-faint); }
+  .search-input{ width:100%; padding:13px 14px 13px 42px; border-radius:10px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:15.5px; outline:none; }
+  .search-input:focus{ border-color:var(--primary); box-shadow:0 0 0 3px color-mix(in srgb, var(--primary) 22%, transparent); }
+  .search-clear{ position:absolute; right:8px; top:50%; transform:translateY(-50%); border:none; background:none; color:var(--text-faint); cursor:pointer; padding:6px; border-radius:6px; display:none; }
+  .search-clear:hover{ background:var(--surface-2); color:var(--text); }
+
+  .btn{ display:inline-flex; align-items:center; gap:8px; border-radius:10px; border:1px solid var(--border); background:var(--surface); color:var(--text); padding:11px 16px; font-size:14.5px; font-weight:600; cursor:pointer; white-space:nowrap; transition:filter .12s ease, transform .05s ease; }
+  .btn:hover{ filter:brightness(0.97); }
+  .btn:active{ transform:translateY(1px); }
+  .btn-primary{ background:var(--primary); border-color:var(--primary); color:var(--primary-ink); }
+  .btn-primary:hover{ filter:brightness(1.06); }
+  .btn-ghost{ background:transparent; border-color:transparent; padding:8px 10px; }
+  .btn-ghost:hover{ background:var(--surface-2); }
+  .btn-danger{ color:var(--danger); }
+  .btn-sm{ padding:7px 11px; font-size:13px; border-radius:8px; }
+  .btn-icon{ padding:9px; border-radius:9px; }
+  .btn-block{ width:100%; justify-content:center; }
+  .btn:disabled{ opacity:.55; cursor:not-allowed; }
+
+  #results{ display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:14px; }
+  .card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:11px; }
+  .card-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+  .card-name{ font-size:17px; font-weight:800; margin:0; line-height:1.25; }
+  .years-badge{ flex:none; font-size:12px; font-weight:600; padding:5px 9px; border-radius:8px; background:var(--accent-soft); color:var(--accent); white-space:nowrap; }
+  .domain-badge{ display:inline-flex; align-items:center; font-size:11.5px; font-weight:700; letter-spacing:.03em; text-transform:uppercase; color:var(--accent); background:var(--accent-soft); padding:4px 10px; border-radius:7px; width:fit-content; }
+  .contact-row{ display:flex; flex-direction:column; gap:5px; }
+  .contact-line{ display:flex; align-items:center; gap:8px; font-size:13.5px; color:var(--text-muted); min-width:0; }
+  .contact-line svg{ flex:none; color:var(--text-faint); }
+  .contact-line span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .contact-line.empty{ color:var(--text-faint); font-style:italic; }
+  .pill{ display:inline-flex; align-items:center; gap:6px; font-size:12.5px; font-weight:600; padding:5px 10px; border-radius:999px; width:fit-content; }
+  .pill-good{ background:var(--good-soft); color:var(--good); }
+  .pill-warn{ background:var(--warn-soft); color:var(--warn); }
+  .pill-info{ background:var(--info-soft); color:var(--info); }
+  .pill-neutral{ background:var(--neutral-soft); color:var(--text-muted); }
+  .chips{ display:flex; flex-wrap:wrap; gap:6px; }
+  .chip{ font-size:12px; padding:4px 9px; border-radius:7px; background:var(--surface-2); color:var(--text); border:1px solid var(--border); }
+  .chip-more{ color:var(--text-muted); background:transparent; }
+  .card-actions{ display:flex; gap:6px; margin-top:auto; padding-top:6px; border-top:1px solid var(--border); }
+  .card-actions .btn{ flex:1; justify-content:center; }
+  .empty-state{ grid-column:1/-1; text-align:center; padding:56px 20px; color:var(--text-muted); background:var(--surface); border:1px dashed var(--border); border-radius:var(--radius); }
+  .empty-state h3{ color:var(--text); margin:12px 0 6px; font-size:17px; }
+  .empty-state p{ margin:0 auto; max-width:360px; font-size:14px; }
+
+  .overlay{ position:fixed; inset:0; background:rgba(10,14,13,.45); backdrop-filter:blur(1px); opacity:0; pointer-events:none; transition:opacity .18s ease; z-index:40; }
+  .overlay.open{ opacity:1; pointer-events:auto; }
+  .drawer{ position:fixed; top:0; right:0; height:100%; width:min(480px,100vw); background:var(--surface); border-left:1px solid var(--border); box-shadow:-16px 0 40px -20px rgba(0,0,0,.3); transform:translateX(100%); transition:transform .2s ease; z-index:41; display:flex; flex-direction:column; }
+  .drawer.open{ transform:translateX(0); }
+  .drawer-head{ display:flex; align-items:center; justify-content:space-between; padding:18px 20px; border-bottom:1px solid var(--border); }
+  .drawer-head h2{ font-size:16.5px; margin:0; }
+  .drawer-body{ padding:18px 20px 28px; overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:16px; }
+
+  .dropzone{ border:1.5px dashed var(--border); border-radius:12px; padding:26px 16px; text-align:center; color:var(--text-muted); cursor:pointer; transition:border-color .15s, background .15s; }
+  .dropzone.drag{ border-color:var(--primary); background:var(--good-soft); }
+  .dropzone svg{ color:var(--text-faint); margin-bottom:8px; }
+  .dropzone strong{ color:var(--text); }
+  .dropzone small{ display:block; margin-top:4px; color:var(--text-faint); font-size:12px; }
+  .paste-toggle{ font-size:13px; color:var(--primary); background:none; border:none; cursor:pointer; padding:0; text-decoration:underline; text-underline-offset:2px; }
+  .paste-area textarea{ width:100%; min-height:120px; border-radius:10px; border:1px solid var(--border); background:var(--bg); color:var(--text); padding:10px 12px; font-size:13.5px; resize:vertical; font-family:"IBM Plex Mono",monospace; }
+
+  .review-card{ border:1px solid var(--border); border-radius:12px; padding:14px; background:var(--surface-2); display:flex; flex-direction:column; gap:10px; }
+  .review-card-head{ display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .review-filename{ font-size:12px; color:var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .review-status{ font-size:11.5px; font-weight:700; padding:2px 8px; border-radius:999px; }
+  .review-status.parsing{ background:var(--info-soft); color:var(--info); }
+  .review-status.ready{ background:var(--good-soft); color:var(--good); }
+  .review-status.error{ background:var(--danger-soft); color:var(--danger); }
+  .review-status.saved{ background:var(--neutral-soft); color:var(--text-muted); }
+  .field{ display:flex; flex-direction:column; gap:4px; }
+  .field label{ font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--text-faint); }
+  .field input, .field textarea{ border:1px solid var(--border); border-radius:8px; padding:8px 10px; background:var(--surface); color:var(--text); font-size:13.5px; outline:none; width:100%; }
+  .field input:focus, .field textarea:focus{ border-color:var(--primary); }
+  .field-row{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .field-note{ font-size:11px; color:var(--text-faint); }
+  .dup-warning{ font-size:11.5px; color:var(--warn); margin-top:3px; display:flex; align-items:center; gap:5px; }
+  .review-actions{ display:flex; gap:8px; justify-content:flex-end; }
+  .review-error{ font-size:12.5px; color:var(--danger); }
+  .drawer-foot{ padding:14px 20px; border-top:1px solid var(--border); display:flex; gap:8px; }
+  .drawer-foot .btn{ flex:1; justify-content:center; }
+
+  #toasts{ position:fixed; left:50%; bottom:22px; transform:translateX(-50%); display:flex; flex-direction:column; gap:8px; z-index:60; width:min(360px,90vw); }
+  .toast{ background:var(--text); color:var(--bg); padding:11px 15px; border-radius:10px; font-size:13.5px; box-shadow:var(--shadow); display:flex; align-items:center; gap:8px; }
+  .toast.error{ background:var(--danger); color:#fff; }
+  .toast.success{ background:var(--good); color:#fff; }
+
+  .banner{ background:var(--warn-soft); color:var(--warn); border:1px solid var(--border); border-radius:12px; padding:12px 16px; font-size:13.5px; margin-bottom:18px; display:flex; gap:10px; align-items:flex-start; }
+  .footnote{ text-align:center; color:var(--text-faint); font-size:12px; margin-top:32px; }
+
+  @media (max-width:560px){
+    .drawer{ width:100vw; }
+    .field-row{ grid-template-columns:1fr; }
+    .search-zone{ padding:14px; }
+    .topbar{ gap:8px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============== LOGIN SCREEN ============== -->
+<div class="login-wrap" id="loginWrap">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="login-mark">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+      </div>
+      <div>
+        <h1>Talent Radar</h1>
+        <p class="sub">Sign in to search your candidates</p>
+      </div>
+    </div>
+    <div id="loginMsgSlot"></div>
+    <form id="loginForm" style="display:flex; flex-direction:column; gap:14px;">
+      <div class="login-field">
+        <label>Email</label>
+        <input type="email" id="loginEmail" autocomplete="username" required>
+      </div>
+      <div class="login-field">
+        <label>Password</label>
+        <input type="password" id="loginPassword" autocomplete="current-password" required>
+      </div>
+      <button type="button" class="forgot-link" id="forgotBtn">Forgot password?</button>
+      <button type="submit" class="btn btn-primary btn-block" id="loginSubmitBtn">Sign in</button>
+    </form>
+    <p class="login-footnote">Accounts are created by the site owner in the Firebase console — if you need access, ask them to add you.</p>
+  </div>
+</div>
+
+<!-- ============== APP (hidden until signed in) ============== -->
+<div class="app" id="appRoot" hidden>
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+      </div>
+      <div>
+        <p class="brand-name">Talent Radar</p>
+        <p class="brand-tag">Upload resumes, search by name, email, phone, skill, or domain</p>
+      </div>
+    </div>
+    <div class="topbar-spacer"></div>
+    <span class="user-chip" id="userChip"></span>
+    <span class="stat-pill"><strong id="statCount">0</strong> candidates</span>
+    <button class="btn btn-ghost btn-icon" id="signOutBtn" title="Sign out" aria-label="Sign out">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+    </button>
+    <button class="btn btn-primary" id="openAddBtn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      Add resumes
+    </button>
+  </div>
+
+  <div class="search-zone">
+    <div class="search-input-wrap">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input class="search-input" id="searchInput" type="text" placeholder="Search by name, email, phone, skill, or domain…" autocomplete="off">
+      <button class="search-clear" id="searchClear" aria-label="Clear search">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div id="results"></div>
+
+  <p class="footnote">Resumes are parsed in your browser. Auto-extracted fields can be edited before (and after) saving.</p>
+</div>
+
+<div class="overlay" id="overlay"></div>
+<div class="drawer" id="drawer" role="dialog" aria-label="Add resumes">
+  <div class="drawer-head">
+    <h2>Add resumes</h2>
+    <button class="btn btn-ghost btn-icon" id="closeDrawerBtn" aria-label="Close">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div class="drawer-body" id="drawerBody">
+    <div class="dropzone" id="dropzone" tabindex="0">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+      <div><strong>Drop resumes here</strong> or click to browse</div>
+      <small>PDF, Word (.docx) or plain text — one or several at once. Files are only read in your browser to extract fields — they are not uploaded anywhere.</small>
+    </div>
+    <input type="file" id="fileInput" multiple accept=".pdf,.docx,.txt,text/plain,application/pdf,.doc" hidden>
+    <div style="text-align:center">
+      <button class="paste-toggle" id="pasteToggle">…or paste resume text instead</button>
+    </div>
+    <div class="paste-area" id="pasteArea" hidden>
+      <textarea id="pasteText" placeholder="Paste the full resume text here, then click Parse."></textarea>
+      <div style="margin-top:8px; display:flex; justify-content:flex-end;">
+        <button class="btn btn-sm btn-primary" id="parsePasteBtn">Parse pasted text</button>
+      </div>
+    </div>
+    <div id="reviewList" style="display:flex; flex-direction:column; gap:12px;"></div>
+  </div>
+  <div class="drawer-foot" id="drawerFoot" hidden>
+    <button class="btn" id="discardAllBtn">Discard all</button>
+    <button class="btn btn-primary" id="saveAllBtn">Save all</button>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<!-- Client-side resume parsing libraries (text extraction only — nothing is uploaded) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+
+<script type="module">
+/* =======================================================================
+   FIREBASE SETUP — paste your project's config below.
+   See SETUP-GUIDE.md for how to get these values (Firebase console →
+   Project settings → your web app → SDK setup and configuration).
+   ======================================================================= */
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyBTtOg90uIRO41nkwZzlOlRaC6Ze8jtTH4",
+  authDomain: "talent-radar-5a30c.firebaseapp.com",
+  projectId: "talent-radar-5a30c",
+  storageBucket: "talent-radar-5a30c.firebasestorage.app",
+  messagingSenderId: "982711808631",
+  appId: "1:982711808631:web:f2d6c9a2322cacb7684c72"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+/* ======================================================================= */
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+import {
+  getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail
+} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+import {
+  getFirestore, collection, doc, addDoc, updateDoc, deleteDoc,
+  onSnapshot, query, orderBy, limit
+} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+
+const fbApp = initializeApp(firebaseConfig);
+const auth = getAuth(fbApp);
+const db = getFirestore(fbApp);
+
+if (window.pdfjsLib) {
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+}
+
+/* ---------------- Extraction heuristics (same as before) ---------------- */
+
+function escapeRe(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+function toTitleCase(str){
+  return str.toLowerCase().replace(/\b([a-z])/g, function(m,c){ return c.toUpperCase(); })
+    .replace(/\bMc([a-z])/i, function(m,c){ return "Mc"+c.toUpperCase(); });
+}
+
+const EMAIL_RE = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9-]+\.[a-zA-Z]{2,}/;
+const PHONE_RE = /(\+?\d{1,3}[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}\b/;
+const HEADER_WORDS = /^(resume|cv|curriculum vitae|profile|summary|objective|contact( information)?|personal details|about me|professional summary)$/i;
+
+function extractName(text, filename){
+  const lines = text.split(/\r?\n/).map(function(l){return l.trim();}).filter(Boolean).slice(0, 15);
+  for (let i=0;i<lines.length;i++){
+    const line = lines[i];
+    if (HEADER_WORDS.test(line)) continue;
+    if (/[0-9@]/.test(line)) continue;
+    if (line.length > 45 || line.length < 3) continue;
+    const words = line.split(/\s+/);
+    if (words.length < 1 || words.length > 5) continue;
+    const looksName = words.every(function(w){
+      return /^[A-Z][a-zA-Z.'-]*$/.test(w) || (/^[A-Z]{2,}$/.test(w) && w.length <= 14);
+    });
+    if (looksName) return toTitleCase(line);
+  }
+  if (filename){
+    let base = filename.replace(/\.[^.]+$/, "").replace(/[_\-]+/g, " ")
+      .replace(/\b(resume|cv|curriculum vitae)\b/gi, "").trim();
+    base = base.replace(/\s{2,}/g, " ");
+    if (base) return toTitleCase(base);
+  }
+  return "";
+}
+function extractEmail(text){ const m = text.match(EMAIL_RE); return m ? m[0] : ""; }
+function extractPhone(text){
+  const m = text.match(PHONE_RE);
+  if (!m) return "";
+  const digits = m[0].replace(/\D/g,"");
+  if (digits.length < 7 || digits.length > 15) return "";
+  return m[0].trim();
+}
+function extractYearsExperience(text){
+  const patterns = [
+    /(\d{1,2})\+?\s*(?:years|yrs)\s*(?:of)?\s*(?:relevant\s+|total\s+|professional\s+|work\s+)?experience/i,
+    /experience\s*[:\-]?\s*(\d{1,2})\+?\s*(?:years|yrs)/i,
+    /(\d{1,2})\+\s*(?:years|yrs)\b/i
+  ];
+  for (const re of patterns){
+    const m = text.match(re);
+    if (m) return { value: m[1], estimated: false };
+  }
+  const years = Array.from(text.matchAll(/\b(19[8-9]\d|20[0-2]\d)\b/g)).map(function(m){return parseInt(m[0],10);});
+  if (years.length >= 2){
+    const span = Math.max.apply(null, years) - Math.min.apply(null, years);
+    if (span > 0 && span < 50) return { value: String(span), estimated: true };
+  }
+  return { value: "", estimated: false };
+}
+
+const DOMAIN_KEYWORDS = [
+  [/\b(sdet|test automation|automation testing|selenium|qa engineer|qa analyst|quality assurance|manual testing|quality analyst|software tester)\b/i, "QA / Testing"],
+  [/\b(front[\s-]?end developer|front[\s-]?end engineer|ui developer|react developer|angular developer|vue developer)\b/i, "Front End"],
+  [/\b(back[\s-]?end developer|back[\s-]?end engineer|api developer)\b/i, "Back End"],
+  [/\bfull[\s-]?stack\b/i, "Full Stack"],
+  [/\bdata migration\b/i, "Data Migration"],
+  [/\b(\.net developer|\.net engineer|asp\.net|dot net developer)\b/i, ".NET"],
+  [/\b(integration (developer|engineer|consultant)|mulesoft|middleware|esb developer)\b/i, "Integration"],
+  [/\b(data engineer|data engineering|etl developer|etl\b)\b/i, "Data Engineering"],
+  [/\bdevops\b/i, "DevOps"],
+  [/\bsalesforce\b/i, "Salesforce"],
+  [/\bsap\b(?! )/i, "SAP"],
+  [/\b(business analyst|business analysis)\b/i, "Business Analysis"],
+  [/\b(project manager|program manager|project management)\b/i, "Project Management"],
+  [/\b(data analyst|data analytics)\b/i, "Data Analytics"],
+  [/\b(java developer|java engineer)\b/i, "Java"],
+  [/\b(python developer)\b/i, "Python"],
+  [/\b(cloud engineer|cloud architect)\b/i, "Cloud"],
+  [/\b(mobile developer|ios developer|android developer)\b/i, "Mobile"],
+  [/\b(network engineer|cyber\s?security)\b/i, "Network / Security"]
+];
+function extractDomain(text){
+  for (const pair of DOMAIN_KEYWORDS){ if (pair[0].test(text)) return pair[1]; }
+  return "";
+}
+
+const VISA_KEYWORDS = [
+  "STEM OPT","OPT","CPT","H-1B","H1B","H1-B","H-4 EAD","H4 EAD",
+  "TN Visa","TN-1","TN1","L-1A","L-1B","L1A","L1B","L-1","L1","L2",
+  "Green Card","GC Holder","Permanent Resident","U.S. Citizen","US Citizen","Citizen",
+  "EAD","No Sponsorship Required","Does Not Require Sponsorship","Require Sponsorship",
+  "Visa Sponsorship Required","Authorized to Work","Work Authorization"
+];
+function extractVisaStatus(text){
+  for (const kw of VISA_KEYWORDS){
+    const re = new RegExp("\\b"+escapeRe(kw)+"\\b","i");
+    if (re.test(text)) return kw;
+  }
+  return "";
+}
+
+const SKILL_DICTIONARY = [
+  "JavaScript","TypeScript","Python","Java","C++","C#","Go","Golang","Rust","Ruby","PHP","Swift","Kotlin","Scala","SQL","R",
+  "React","Angular","Vue","Node.js","Next.js","Django","Flask","Spring","Spring Boot",".NET","Express","jQuery","HTML","CSS",
+  "AWS","Azure","GCP","Google Cloud","Docker","Kubernetes","Terraform","Jenkins","CI/CD","Git","GitHub","GitLab","Linux","Unix","Bash",
+  "Excel","Tableau","Power BI","Pandas","NumPy","Machine Learning","Deep Learning","Data Analysis","Data Science","Data Engineering",
+  "PostgreSQL","MySQL","MongoDB","Oracle","SQL Server","Snowflake","Redis","Kafka","Spark","Hadoop",
+  "Salesforce","SAP","Workday","ServiceNow","Agile","Scrum","Kanban","Project Management","JIRA","Confluence",
+  "Figma","Sketch","Photoshop","Illustrator","REST API","GraphQL","Microservices","Networking","Cybersecurity","DevOps",
+  "QA Testing","Selenium","Automation Testing","Product Management","Business Analysis","UI/UX","SEO","Digital Marketing",
+  "Accounting","Financial Modeling","QuickBooks","SAS","MATLAB","Power Automate","Android","iOS","Objective-C","Unity"
+];
+function extractSkillsDictionary(text){
+  const found = [];
+  for (const skill of SKILL_DICTIONARY){
+    const re = new RegExp("(^|[^a-zA-Z0-9])"+escapeRe(skill)+"($|[^a-zA-Z0-9])","i");
+    if (re.test(text)) found.push(skill);
+  }
+  return found;
+}
+const SKILL_HEADER_RE = /^(technical skills|core competencies|key skills|skills( and tools)?|areas of expertise|technologies|tech stack|skill set)\s*:?$/i;
+const SKILL_STOP_RE = /^(experience|work experience|employment history|education|projects|certifications?|summary|profile|objective|work history|professional experience|references)\s*:?$/i;
+function splitSkillTokens(str){
+  return str.split(/[,•|/\n]|(?:\s{3,})/)
+    .map(function(s){ return s.replace(/^[-*•]\s*/, "").trim(); })
+    .filter(function(s){ return s.length >= 2 && s.length <= 30 && !/^\d+$/.test(s); });
+}
+function extractSkillsSection(text){
+  const lines = text.split(/\r?\n/);
+  let idx = -1;
+  for (let i=0;i<lines.length;i++){ if (SKILL_HEADER_RE.test(lines[i].trim())) { idx = i; break; } }
+  if (idx === -1) return [];
+  const collected = [];
+  for (let i=idx+1; i<lines.length && i<idx+40; i++){
+    const line = lines[i].trim();
+    if (!line){ if (collected.length) break; else continue; }
+    if (SKILL_STOP_RE.test(line)) break;
+    collected.push(line);
+  }
+  return splitSkillTokens(collected.join(", "));
+}
+function extractSkills(text){
+  const section = extractSkillsSection(text);
+  const dict = extractSkillsDictionary(text);
+  const seen = new Set();
+  const out = [];
+  section.concat(dict).forEach(function(s){
+    const key = s.toLowerCase();
+    if (!seen.has(key)){ seen.add(key); out.push(s); }
+  });
+  return out.slice(0, 25);
+}
+function extractFields(text, filename){
+  const years = extractYearsExperience(text);
+  return {
+    name: extractName(text, filename),
+    email: extractEmail(text),
+    phone: extractPhone(text),
+    skills: extractSkills(text),
+    yearsExperience: years.value,
+    yearsEstimated: years.estimated,
+    visaStatus: extractVisaStatus(text),
+    domain: extractDomain(text)
+  };
+}
+
+/* ---------------- File reading ---------------- */
+
+async function extractPdfText(file){
+  if (!window.pdfjsLib) throw new Error("PDF reader didn't load — try pasting the resume text instead.");
+  const buf = await file.arrayBuffer();
+  const pdf = await window.pdfjsLib.getDocument({ data: buf }).promise;
+  let text = "";
+  for (let p=1; p<=pdf.numPages; p++){
+    const page = await pdf.getPage(p);
+    const content = await page.getTextContent();
+    text += content.items.map(function(it){ return it.str; }).join(" ") + "\n";
+  }
+  return text;
+}
+async function extractDocxText(file){
+  if (!window.mammoth) throw new Error("DOCX reader didn't load — try pasting the resume text instead.");
+  const buf = await file.arrayBuffer();
+  const result = await window.mammoth.extractRawText({ arrayBuffer: buf });
+  return result.value;
+}
+async function fileToText(file){
+  const name = (file.name || "").toLowerCase();
+  if (name.endsWith(".pdf") || file.type === "application/pdf") return extractPdfText(file);
+  if (name.endsWith(".docx") || file.type.indexOf("officedocument.wordprocessingml") !== -1) return extractDocxText(file);
+  if (name.endsWith(".doc")) throw new Error("Old-style .doc isn't supported — save as .docx or paste the text instead.");
+  return file.text();
+}
+
+/* ---------------- State ---------------- */
+
+let candidates = [];
+let searchQuery = "";
+let pending = [];
+let unsubCandidates = null;
+
+const $ = function(id){ return document.getElementById(id); };
+const resultsEl = $("results");
+const searchInput = $("searchInput");
+const searchClear = $("searchClear");
+const statCount = $("statCount");
+const overlay = $("overlay");
+const drawer = $("drawer");
+const reviewList = $("reviewList");
+const drawerFoot = $("drawerFoot");
+const dropzone = $("dropzone");
+const fileInput = $("fileInput");
+
+function uid(){ return Math.random().toString(36).slice(2) + Date.now().toString(36); }
+function toast(message, kind){
+  const el = document.createElement("div");
+  el.className = "toast" + (kind ? " " + kind : "");
+  el.textContent = message;
+  $("toasts").appendChild(el);
+  setTimeout(function(){ el.remove(); }, 4200);
+}
+function escapeHtml(s){
+  return String(s || "").replace(/[&<>"']/g, function(c){
+    return ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c];
+  });
+}
+function visaTone(status){
+  if (!status) return "neutral";
+  const s = status.toLowerCase();
+  if (/(citizen|green card|permanent resident|gc holder)/.test(s)) return "good";
+  if (/(opt|cpt|h-4 ead|h4 ead|^ead$)/.test(s)) return "warn";
+  if (/(h1|h-1|l1|l-1|l2|tn|sponsorship required)/.test(s)) return "info";
+  return "neutral";
+}
+function findDuplicateByName(name, excludeId){
+  const norm = (name || "").trim().toLowerCase();
+  if (!norm) return null;
+  return candidates.find(function(c){ return c.id !== excludeId && (c.name || "").trim().toLowerCase() === norm; }) || null;
+}
+function upsertLocalCandidate(d){
+  const idx = candidates.findIndex(function(c){ return c.id === d.id; });
+  if (idx === -1) candidates.push(d); else candidates[idx] = d;
+  candidates.sort(function(a,b){ return (a.name || "").localeCompare(b.name || ""); });
+  renderResults();
+}
+function removeLocalCandidate(id){
+  candidates = candidates.filter(function(c){ return c.id !== id; });
+  renderResults();
+}
+function candidateMatches(c, q){
+  const qDigits = q.replace(/\D/g, "");
+  const haystack = [c.name, c.email, c.domain].join(" ").toLowerCase();
+  if (haystack.indexOf(q) !== -1) return true;
+  const skills = Array.isArray(c.skills) ? c.skills : [];
+  if (skills.some(function(s){ return (s || "").toLowerCase().indexOf(q) !== -1; })) return true;
+  const phone = c.phone || "";
+  if (phone.toLowerCase().indexOf(q) !== -1) return true;
+  if (qDigits.length >= 3){
+    const phoneDigits = phone.replace(/\D/g, "");
+    if (phoneDigits.indexOf(qDigits) !== -1) return true;
+  }
+  return false;
+}
+
+/* ---------------- Rendering: results ---------------- */
+
+function renderResults(){
+  const q = searchQuery.trim().toLowerCase();
+  const filtered = q ? candidates.filter(function(c){ return candidateMatches(c, q); }) : candidates.slice();
+
+  statCount.textContent = String(candidates.length);
+  searchClear.style.display = q ? "flex" : "none";
+
+  if (!candidates.length){
+    resultsEl.innerHTML =
+      '<div class="empty-state"><h3>No candidates yet</h3>' +
+      '<p>Click "Add resumes" to upload your first PDF, Word doc, or pasted resume text.</p></div>';
+    return;
+  }
+  if (!filtered.length){
+    resultsEl.innerHTML =
+      '<div class="empty-state"><h3>No matches for "' + escapeHtml(searchQuery) + '"</h3>' +
+      '<p>Try a different spelling, or clear the search to see everyone.</p></div>';
+    return;
+  }
+  resultsEl.innerHTML = filtered.map(cardHtml).join("");
+  filtered.forEach(function(c){
+    const editBtn = document.querySelector('[data-edit="' + c.id + '"]');
+    const delBtn = document.querySelector('[data-del="' + c.id + '"]');
+    if (editBtn) editBtn.addEventListener("click", function(){ openEdit(c); });
+    if (delBtn) delBtn.addEventListener("click", function(){ deleteCandidate(c); });
+  });
+}
+
+function cardHtml(c){
+  const tone = visaTone(c.visaStatus);
+  const skills = Array.isArray(c.skills) ? c.skills : [];
+  const shown = skills.slice(0, 8);
+  const more = skills.length - shown.length;
+  const years = c.yearsExperience ? (c.yearsExperience + (c.yearsEstimated ? " (est.)" : "") + (isNaN(Number(c.yearsExperience)) ? "" : " yrs")) : "";
+  const resumeLink = c.resumeLink
+    ? '<a class="btn btn-sm" href="' + escapeHtml(c.resumeLink) + '" target="_blank" rel="noopener noreferrer">' +
+        '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 001 1h4"/><path d="M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z"/></svg> Resume' +
+      '</a>'
+    : "";
+  return (
+    '<div class="card">' +
+      '<div class="card-top">' +
+        '<h3 class="card-name">' + (escapeHtml(c.name) || '<span style="color:var(--text-faint);font-weight:600">Unnamed candidate</span>') + '</h3>' +
+        (years ? '<span class="years-badge mono">' + escapeHtml(years) + '</span>' : "") +
+      '</div>' +
+      (c.domain ? '<span class="domain-badge">' + escapeHtml(c.domain) + '</span>' : "") +
+      '<div class="contact-row">' + contactLine("mail", c.email) + contactLine("phone", c.phone) + '</div>' +
+      (c.visaStatus ? '<span class="pill pill-' + tone + '">' + escapeHtml(c.visaStatus) + '</span>' : '<span class="pill pill-neutral">Visa status not specified</span>') +
+      (shown.length ? '<div class="chips">' + shown.map(function(s){ return '<span class="chip">' + escapeHtml(s) + '</span>'; }).join("") + (more > 0 ? '<span class="chip chip-more">+' + more + ' more</span>' : "") + '</div>' : "") +
+      '<div class="card-actions">' + resumeLink +
+        '<button class="btn btn-sm" data-edit="' + c.id + '">Edit</button>' +
+        '<button class="btn btn-sm btn-danger" data-del="' + c.id + '">Delete</button>' +
+      '</div>' +
+    '</div>'
+  );
+}
+function contactLine(kind, value){
+  const icon = kind === "mail"
+    ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 6l-10 7L2 6"/><rect x="2" y="4" width="20" height="16" rx="2"/></svg>'
+    : '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.12.9.35 1.78.68 2.61a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.47-1.27a2 2 0 012.11-.45c.83.33 1.71.56 2.61.68A2 2 0 0122 16.92z"/></svg>';
+  if (!value) return '<div class="contact-line empty">' + icon + '<span>No ' + (kind === "mail" ? "email" : "phone") + ' on file</span></div>';
+  return '<div class="contact-line mono">' + icon + '<span>' + escapeHtml(value) + '</span></div>';
+}
+
+/* ---------------- Drawer / add flow ---------------- */
+
+function openDrawer(){ overlay.classList.add("open"); drawer.classList.add("open"); document.addEventListener("keydown", onEsc); }
+function closeDrawer(){ overlay.classList.remove("open"); drawer.classList.remove("open"); document.removeEventListener("keydown", onEsc); }
+function onEsc(e){ if (e.key === "Escape") closeDrawer(); }
+$("openAddBtn").addEventListener("click", openDrawer);
+$("closeDrawerBtn").addEventListener("click", closeDrawer);
+overlay.addEventListener("click", closeDrawer);
+
+dropzone.addEventListener("click", function(){ fileInput.click(); });
+dropzone.addEventListener("keydown", function(e){ if (e.key === "Enter" || e.key === " ") fileInput.click(); });
+["dragenter","dragover"].forEach(function(evt){ dropzone.addEventListener(evt, function(e){ e.preventDefault(); dropzone.classList.add("drag"); }); });
+["dragleave","drop"].forEach(function(evt){ dropzone.addEventListener(evt, function(e){ e.preventDefault(); dropzone.classList.remove("drag"); }); });
+dropzone.addEventListener("drop", function(e){
+  const files = e.dataTransfer && e.dataTransfer.files;
+  if (files && files.length) handleFiles(files);
+});
+fileInput.addEventListener("change", function(){
+  if (fileInput.files && fileInput.files.length) handleFiles(fileInput.files);
+  fileInput.value = "";
+});
+$("pasteToggle").addEventListener("click", function(){ const area = $("pasteArea"); area.hidden = !area.hidden; });
+$("parsePasteBtn").addEventListener("click", function(){
+  const text = $("pasteText").value.trim();
+  if (!text){ toast("Paste some resume text first.", "error"); return; }
+  const item = { uid: uid(), filename: "Pasted text", file: null, status: "parsing" };
+  pending.push(item);
+  renderPending();
+  finishParse(item, text);
+  $("pasteText").value = "";
+});
+
+function handleFiles(fileList){
+  const files = Array.from(fileList).slice(0, 20);
+  files.forEach(function(file){
+    if (file.size > 20 * 1024 * 1024){ toast(file.name + " is too large (max 20MB).", "error"); return; }
+    const item = { uid: uid(), filename: file.name, file: file, status: "parsing" };
+    pending.push(item);
+    renderPending();
+    fileToText(file).then(function(text){ finishParse(item, text); }).catch(function(err){
+      item.status = "error";
+      item.error = err.message || "Couldn't read that file.";
+      renderPending();
+    });
+  });
+}
+function finishParse(item, text){
+  item.rawText = text;
+  item.fields = extractFields(text, item.filename);
+  item.fields.resumeLink = "";
+  item.status = "ready";
+  renderPending();
+}
+
+function renderPending(){
+  drawerFoot.hidden = pending.filter(function(p){ return p.status === "ready"; }).length < 2;
+  reviewList.innerHTML = pending.map(pendingCardHtml).join("");
+  pending.forEach(function(item){
+    const root = document.querySelector('[data-pending="' + item.uid + '"]');
+    if (!root) return;
+    const saveBtn = root.querySelector(".js-save");
+    const discardBtn = root.querySelector(".js-discard");
+    if (saveBtn) saveBtn.addEventListener("click", function(){ saveOne(item); });
+    if (discardBtn) discardBtn.addEventListener("click", function(){ removePending(item.uid); });
+    if (item.status === "ready" && item.fields){
+      ["name","email","phone","yearsExperience","visaStatus","domain","resumeLink"].forEach(function(f){
+        const input = root.querySelector('[data-field="' + f + '"]');
+        if (!input) return;
+        input.addEventListener("input", function(){
+          item.fields[f] = input.value;
+          if (f === "name"){
+            const warn = root.querySelector("[data-dup]");
+            const dup = findDuplicateByName(input.value, null);
+            if (warn){
+              warn.hidden = !dup;
+              const t = warn.querySelector("[data-dup-text]");
+              if (t) t.textContent = dup ? "Already in your list — saving will add a second entry." : "";
+            }
+          }
+        });
+      });
+      const skillsInput = root.querySelector('[data-field="skills"]');
+      if (skillsInput) skillsInput.addEventListener("input", function(){
+        item.fields.skills = skillsInput.value.split(",").map(function(s){ return s.trim(); }).filter(Boolean);
+      });
+    }
+  });
+}
+function removePending(id){ pending = pending.filter(function(p){ return p.uid !== id; }); renderPending(); }
+
+function pendingCardHtml(item){
+  const statusLabel = { parsing: "Parsing…", ready: "Ready to review", error: "Couldn't parse", saved: "Saved" }[item.status] || item.status;
+  let body = "";
+  if (item.status === "parsing"){
+    body = '<p style="color:var(--text-muted);font-size:13px;margin:0">Reading ' + escapeHtml(item.filename) + '…</p>';
+  } else if (item.status === "error"){
+    body = '<p class="review-error">' + escapeHtml(item.error) + '</p>';
+  } else if (item.status === "ready" || item.status === "saved"){
+    const f = item.fields;
+    const disabled = item.status === "saved" ? "disabled" : "";
+    const dup = findDuplicateByName(f.name, null);
+    body =
+      '<div class="field"><label>Name</label><input data-field="name" value="' + escapeHtml(f.name) + '" ' + disabled + '>' +
+        '<div class="dup-warning" data-dup ' + (dup ? "" : "hidden") + '>' +
+          '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M12 9v4M12 17h.01M10.29 3.86l-8.18 14.14A1 1 0 003 19.5h18a1 1 0 00.89-1.5L13.71 3.86a1 1 0 00-1.72 0z"/></svg>' +
+          '<span data-dup-text>' + (dup ? 'Already in your list — saving will add a second entry.' : '') + '</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="field-row">' +
+        '<div class="field"><label>Email</label><input data-field="email" value="' + escapeHtml(f.email) + '" ' + disabled + '></div>' +
+        '<div class="field"><label>Phone</label><input data-field="phone" value="' + escapeHtml(f.phone) + '" ' + disabled + '></div>' +
+      '</div>' +
+      '<div class="field-row">' +
+        '<div class="field"><label>Domain</label><input data-field="domain" value="' + escapeHtml(f.domain) + '" placeholder="QA, Front End, .NET, Integration…" ' + disabled + '></div>' +
+        '<div class="field"><label>Years experience</label><input data-field="yearsExperience" value="' + escapeHtml(f.yearsExperience) + '" ' + disabled + '>' +
+          (f.yearsEstimated ? '<span class="field-note">Estimated from dates on the resume — please check.</span>' : "") +
+        '</div>' +
+      '</div>' +
+      '<div class="field"><label>Visa status</label><input data-field="visaStatus" value="' + escapeHtml(f.visaStatus) + '" ' + disabled + '></div>' +
+      '<div class="field"><label>Key skills (comma separated)</label><input data-field="skills" value="' + escapeHtml((f.skills||[]).join(", ")) + '" ' + disabled + '></div>' +
+      '<div class="field"><label>Resume link (optional — paste a Google Drive / Dropbox link)</label><input data-field="resumeLink" value="' + escapeHtml(f.resumeLink||"") + '" placeholder="https://drive.google.com/…" ' + disabled + '></div>';
+  }
+  const actions = item.status === "ready"
+    ? '<div class="review-actions"><button class="btn btn-sm js-discard">Discard</button><button class="btn btn-sm btn-primary js-save">Save candidate</button></div>'
+    : item.status === "error"
+    ? '<div class="review-actions"><button class="btn btn-sm js-discard">Remove</button></div>'
+    : "";
+  return (
+    '<div class="review-card" data-pending="' + item.uid + '">' +
+      '<div class="review-card-head"><span class="review-filename">' + escapeHtml(item.filename) + '</span>' +
+        '<span class="review-status ' + item.status + '">' + statusLabel + '</span></div>' +
+      body + actions +
+    '</div>'
+  );
+}
+
+async function saveOne(item){
+  const dup = findDuplicateByName(item.fields.name, null);
+  if (dup){
+    const proceed = confirm('"' + item.fields.name + '" is already in your candidate list. Save this as a separate entry anyway?');
+    if (!proceed) return;
+  }
+  const saveBtn = document.querySelector('[data-pending="' + item.uid + '"] .js-save');
+  if (saveBtn){ saveBtn.disabled = true; saveBtn.textContent = "Saving…"; }
+  try {
+    const now = new Date().toISOString();
+    const data = {
+      name: item.fields.name || "",
+      email: item.fields.email || "",
+      phone: item.fields.phone || "",
+      skills: item.fields.skills || [],
+      yearsExperience: item.fields.yearsExperience || "",
+      yearsEstimated: !!item.fields.yearsEstimated,
+      visaStatus: item.fields.visaStatus || "",
+      domain: item.fields.domain || "",
+      resumeFilename: item.filename,
+      resumeLink: item.fields.resumeLink || "",
+      addedBy: (auth.currentUser && auth.currentUser.email) || "",
+      createdAt: now,
+      updatedAt: now
+    };
+    const ref = await addDoc(collection(db, "candidates"), data);
+    upsertLocalCandidate(Object.assign({ id: ref.id }, data));
+    item.status = "saved";
+    renderPending();
+    toast("Saved " + (item.fields.name || item.filename) + ".", "success");
+  } catch (e){
+    toast("Couldn't save: " + (e.message || "unknown error"), "error");
+    if (saveBtn){ saveBtn.disabled = false; saveBtn.textContent = "Save candidate"; }
+  }
+}
+$("saveAllBtn").addEventListener("click", async function(){
+  const ready = pending.filter(function(p){ return p.status === "ready"; });
+  for (const item of ready){ await saveOne(item); }
+});
+$("discardAllBtn").addEventListener("click", function(){
+  pending = pending.filter(function(p){ return p.status === "saved"; });
+  renderPending();
+});
+
+/* ---------------- Edit / delete ---------------- */
+
+function openEdit(c){
+  const overlay2 = document.createElement("div");
+  overlay2.className = "overlay open";
+  const panel = document.createElement("div");
+  panel.className = "drawer open";
+  panel.setAttribute("role", "dialog");
+  panel.innerHTML =
+    '<div class="drawer-head"><h2>Edit candidate</h2><button class="btn btn-ghost btn-icon" id="editClose"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>' +
+    '<div class="drawer-body">' +
+      '<div class="field"><label>Name</label><input id="editName" value="' + escapeHtml(c.name) + '">' +
+        '<div class="dup-warning" data-dup hidden><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M12 9v4M12 17h.01M10.29 3.86l-8.18 14.14A1 1 0 003 19.5h18a1 1 0 00.89-1.5L13.71 3.86a1 1 0 00-1.72 0z"/></svg><span data-dup-text></span></div>' +
+      '</div>' +
+      '<div class="field-row">' +
+        '<div class="field"><label>Email</label><input id="editEmail" value="' + escapeHtml(c.email) + '"></div>' +
+        '<div class="field"><label>Phone</label><input id="editPhone" value="' + escapeHtml(c.phone) + '"></div>' +
+      '</div>' +
+      '<div class="field-row">' +
+        '<div class="field"><label>Domain</label><input id="editDomain" value="' + escapeHtml(c.domain) + '" placeholder="QA, Front End, .NET, Integration…"></div>' +
+        '<div class="field"><label>Years experience</label><input id="editYears" value="' + escapeHtml(c.yearsExperience) + '"></div>' +
+      '</div>' +
+      '<div class="field"><label>Visa status</label><input id="editVisa" value="' + escapeHtml(c.visaStatus) + '"></div>' +
+      '<div class="field"><label>Key skills (comma separated)</label><input id="editSkills" value="' + escapeHtml((c.skills||[]).join(", ")) + '"></div>' +
+      '<div class="field"><label>Resume link (optional)</label><input id="editResumeLink" value="' + escapeHtml(c.resumeLink||"") + '" placeholder="https://drive.google.com/…"></div>' +
+    '</div>' +
+    '<div class="drawer-foot"><button class="btn" id="editCancel">Cancel</button><button class="btn btn-primary" id="editSave">Save changes</button></div>';
+  document.body.appendChild(overlay2);
+  document.body.appendChild(panel);
+
+  function close(){ overlay2.remove(); panel.remove(); }
+  overlay2.addEventListener("click", close);
+  panel.querySelector("#editClose").addEventListener("click", close);
+  panel.querySelector("#editCancel").addEventListener("click", close);
+  const editNameInput = panel.querySelector("#editName");
+  editNameInput.addEventListener("input", function(){
+    const warn = panel.querySelector("[data-dup]");
+    const dup = findDuplicateByName(editNameInput.value, c.id);
+    if (warn){
+      warn.hidden = !dup;
+      const t = warn.querySelector("[data-dup-text]");
+      if (t) t.textContent = dup ? "Already in your list — saving will create a second entry with this name." : "";
+    }
+  });
+  panel.querySelector("#editSave").addEventListener("click", async function(){
+    const dup = findDuplicateByName(editNameInput.value, c.id);
+    if (dup){
+      const proceed = confirm('"' + editNameInput.value.trim() + '" matches another candidate already in your list. Save anyway?');
+      if (!proceed) return;
+    }
+    const btn = panel.querySelector("#editSave");
+    btn.disabled = true; btn.textContent = "Saving…";
+    try {
+      const updates = {
+        name: panel.querySelector("#editName").value.trim(),
+        email: panel.querySelector("#editEmail").value.trim(),
+        phone: panel.querySelector("#editPhone").value.trim(),
+        yearsExperience: panel.querySelector("#editYears").value.trim(),
+        visaStatus: panel.querySelector("#editVisa").value.trim(),
+        domain: panel.querySelector("#editDomain").value.trim(),
+        skills: panel.querySelector("#editSkills").value.split(",").map(function(s){ return s.trim(); }).filter(Boolean),
+        resumeLink: panel.querySelector("#editResumeLink").value.trim(),
+        updatedAt: new Date().toISOString()
+      };
+      await updateDoc(doc(db, "candidates", c.id), updates);
+      upsertLocalCandidate(Object.assign({}, c, updates));
+      toast("Updated.", "success");
+      close();
+    } catch (e){
+      toast("Couldn't save changes: " + (e.message||""), "error");
+      btn.disabled = false; btn.textContent = "Save changes";
+    }
+  });
+}
+
+async function deleteCandidate(c){
+  if (!confirm('Delete "' + (c.name || "this candidate") + '"? This can\'t be undone.')) return;
+  try {
+    await deleteDoc(doc(db, "candidates", c.id));
+    removeLocalCandidate(c.id);
+    toast("Deleted.", "success");
+  } catch (e){
+    toast("Couldn't delete: " + (e.message||""), "error");
+  }
+}
+
+/* ---------------- Search wiring ---------------- */
+
+searchInput.addEventListener("input", function(){ searchQuery = searchInput.value; renderResults(); });
+searchClear.addEventListener("click", function(){ searchInput.value = ""; searchQuery = ""; renderResults(); searchInput.focus(); });
+
+/* ---------------- Auth wiring ---------------- */
+
+const loginWrap = $("loginWrap");
+const appRoot = $("appRoot");
+const loginForm = $("loginForm");
+const loginMsgSlot = $("loginMsgSlot");
+const loginSubmitBtn = $("loginSubmitBtn");
+
+function showLoginMessage(text, kind){
+  loginMsgSlot.innerHTML = text ? '<div class="login-' + kind + '">' + escapeHtml(text) + '</div>' : "";
+}
+function friendlyAuthError(code){
+  const map = {
+    "auth/invalid-email": "That doesn't look like a valid email address.",
+    "auth/user-not-found": "No account found for that email.",
+    "auth/wrong-password": "Incorrect password.",
+    "auth/invalid-credential": "Incorrect email or password.",
+    "auth/too-many-requests": "Too many attempts — please wait a moment and try again.",
+    "auth/network-request-failed": "Network error — check your connection and try again."
+  };
+  return map[code] || "Couldn't sign in. Please try again.";
+}
+
+loginForm.addEventListener("submit", async function(e){
+  e.preventDefault();
+  showLoginMessage("", "");
+  const email = $("loginEmail").value.trim();
+  const password = $("loginPassword").value;
+  loginSubmitBtn.disabled = true; loginSubmitBtn.textContent = "Signing in…";
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+  } catch (err){
+    showLoginMessage(friendlyAuthError(err.code), "error");
+  } finally {
+    loginSubmitBtn.disabled = false; loginSubmitBtn.textContent = "Sign in";
+  }
+});
+
+$("forgotBtn").addEventListener("click", async function(){
+  const email = $("loginEmail").value.trim();
+  if (!email){ showLoginMessage("Enter your email above first, then click \"Forgot password?\" again.", "error"); return; }
+  try {
+    await sendPasswordResetEmail(auth, email);
+    showLoginMessage("If that email has an account, a reset link was just sent to it.", "msg");
+  } catch (err){
+    showLoginMessage(friendlyAuthError(err.code), "error");
+  }
+});
+
+$("signOutBtn").addEventListener("click", function(){ signOut(auth); });
+
+onAuthStateChanged(auth, function(user){
+  if (user){
+    loginWrap.hidden = true;
+    appRoot.hidden = false;
+    $("userChip").innerHTML = "Signed in as <strong>" + escapeHtml(user.email || "") + "</strong>";
+    if (!unsubCandidates){
+      unsubCandidates = onSnapshot(
+        query(collection(db, "candidates"), orderBy("name", "asc"), limit(5000)),
+        function(snap){
+          candidates = snap.docs.map(function(d){ return Object.assign({ id: d.id }, d.data()); });
+          renderResults();
+        },
+        function(err){ toast("Couldn't load candidates: " + err.message, "error"); }
+      );
+    }
+  } else {
+    loginWrap.hidden = false;
+    appRoot.hidden = true;
+    if (unsubCandidates){ unsubCandidates(); unsubCandidates = null; }
+    candidates = [];
+  }
+});
+
+renderResults();
+</script>
+</body>
+</html>
