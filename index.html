@@ -240,7 +240,7 @@
   <div class="search-zone">
     <div class="search-input-wrap">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
-      <input class="search-input" id="searchInput" type="text" placeholder="Search by name, email, phone, skill, or domain…" autocomplete="off">
+      <input class="search-input" id="searchInput" type="text" placeholder="Search by name, email, phone, skill, domain, or location…" autocomplete="off">
       <button class="search-clear" id="searchClear" aria-label="Clear search">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
@@ -292,7 +292,9 @@
 
 <script type="module">
 /* =======================================================================
-   FIREBASE SETUP — your project's config.
+   FIREBASE SETUP — paste your project's config below.
+   See SETUP-GUIDE.md for how to get these values (Firebase console →
+   Project settings → your web app → SDK setup and configuration).
    ======================================================================= */
 const firebaseConfig = {
   apiKey: "AIzaSyBTtOg90uIRO41nkwZzlOlRaC6Ze8jtTH4",
@@ -302,6 +304,17 @@ const firebaseConfig = {
   messagingSenderId: "982711808631",
   appId: "1:982711808631:web:f2d6c9a2322cacb7684c72"
 };
+/* ======================================================================= */
+
+/* =======================================================================
+   CLOUDINARY SETUP (optional) — lets resume files upload automatically
+   instead of you pasting a Drive/Dropbox link by hand. Leave the two
+   placeholders below as-is to skip this and keep the manual link field.
+   See SETUP-GUIDE.md, Part 4, for how to get these two values (free,
+   no credit card).
+   ======================================================================= */
+const CLOUDINARY_CLOUD_NAME = "PASTE_YOUR_CLOUD_NAME";
+const CLOUDINARY_UPLOAD_PRESET = "PASTE_YOUR_UNSIGNED_UPLOAD_PRESET";
 /* ======================================================================= */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
@@ -316,6 +329,7 @@ import {
 const fbApp = initializeApp(firebaseConfig);
 const auth = getAuth(fbApp);
 const db = getFirestore(fbApp);
+
 if (window.pdfjsLib) {
   window.pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 }
@@ -472,17 +486,33 @@ function extractSkills(text){
   });
   return out.slice(0, 25);
 }
+/* Location — Onshore / Offshore, guessed from the phone number's country
+   code. Ambiguous numbers (no clear +1/10-digit or +91 pattern, or no
+   phone at all) default to Onshore rather than being left blank. */
+function extractLocation(phone){
+  const raw = (phone || "").trim();
+  if (raw.indexOf("+91") === 0) return "Offshore";
+  if (raw.indexOf("+1") === 0) return "Onshore";
+  const digits = raw.replace(/\D/g, "");
+  if (digits.length === 10) return "Onshore";
+  if (digits.length === 11 && digits.charAt(0) === "1") return "Onshore"; // "1" + 10 digits, no "+"
+  if (digits.length === 12 && digits.indexOf("91") === 0) return "Offshore"; // "91" + 10 digits, no "+"
+  return "Onshore"; // default for anything else, per your setting
+}
+
 function extractFields(text, filename){
   const years = extractYearsExperience(text);
+  const phone = extractPhone(text);
   return {
     name: extractName(text, filename),
     email: extractEmail(text),
-    phone: extractPhone(text),
+    phone: phone,
     skills: extractSkills(text),
     yearsExperience: years.value,
     yearsEstimated: years.estimated,
     visaStatus: extractVisaStatus(text),
-    domain: extractDomain(text)
+    domain: extractDomain(text),
+    location: extractLocation(phone)
   };
 }
 
@@ -571,7 +601,7 @@ function removeLocalCandidate(id){
 }
 function candidateMatches(c, q){
   const qDigits = q.replace(/\D/g, "");
-  const haystack = [c.name, c.email, c.domain].join(" ").toLowerCase();
+  const haystack = [c.name, c.email, c.domain, c.location].join(" ").toLowerCase();
   if (haystack.indexOf(q) !== -1) return true;
   const skills = Array.isArray(c.skills) ? c.skills : [];
   if (skills.some(function(s){ return (s || "").toLowerCase().indexOf(q) !== -1; })) return true;
@@ -625,13 +655,20 @@ function cardHtml(c){
         '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 001 1h4"/><path d="M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z"/></svg> Resume' +
       '</a>'
     : "";
+  const badges = [];
+  if (c.domain) badges.push('<span class="domain-badge">' + escapeHtml(c.domain) + '</span>');
+  if (c.location) badges.push(
+    '<span class="domain-badge" style="' +
+      (c.location === "Offshore" ? "color:var(--info);background:var(--info-soft);" : "color:var(--good);background:var(--good-soft);") +
+    '">' + escapeHtml(c.location) + '</span>'
+  );
   return (
     '<div class="card">' +
       '<div class="card-top">' +
         '<h3 class="card-name">' + (escapeHtml(c.name) || '<span style="color:var(--text-faint);font-weight:600">Unnamed candidate</span>') + '</h3>' +
         (years ? '<span class="years-badge mono">' + escapeHtml(years) + '</span>' : "") +
       '</div>' +
-      (c.domain ? '<span class="domain-badge">' + escapeHtml(c.domain) + '</span>' : "") +
+      (badges.length ? '<div style="display:flex;gap:6px;flex-wrap:wrap;">' + badges.join("") + '</div>' : "") +
       '<div class="contact-row">' + contactLine("mail", c.email) + contactLine("phone", c.phone) + '</div>' +
       (c.visaStatus ? '<span class="pill pill-' + tone + '">' + escapeHtml(c.visaStatus) + '</span>' : '<span class="pill pill-neutral">Visa status not specified</span>') +
       (shown.length ? '<div class="chips">' + shown.map(function(s){ return '<span class="chip">' + escapeHtml(s) + '</span>'; }).join("") + (more > 0 ? '<span class="chip chip-more">+' + more + ' more</span>' : "") + '</div>' : "") +
@@ -704,6 +741,34 @@ function finishParse(item, text){
   renderPending();
 }
 
+/* ---------------- Optional automatic resume upload (Cloudinary) ---------------- */
+
+function cloudinaryConfigured(){
+  return CLOUDINARY_CLOUD_NAME && CLOUDINARY_CLOUD_NAME.indexOf("PASTE_") !== 0 &&
+         CLOUDINARY_UPLOAD_PRESET && CLOUDINARY_UPLOAD_PRESET.indexOf("PASTE_") !== 0;
+}
+
+async function uploadResumeToCloudinary(file){
+  const form = new FormData();
+  form.append("file", file);
+  form.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+  const res = await fetch("https://api.cloudinary.com/v1_1/" + CLOUDINARY_CLOUD_NAME + "/raw/upload", {
+    method: "POST",
+    body: form
+  });
+  if (!res.ok){
+    let msg = "Upload failed (status " + res.status + ")";
+    try {
+      const j = await res.json();
+      if (j && j.error && j.error.message) msg = j.error.message;
+    } catch (e){ /* ignore parse error, use generic message */ }
+    throw new Error(msg);
+  }
+  const json = await res.json();
+  if (!json.secure_url) throw new Error("Upload succeeded but no file URL was returned.");
+  return json.secure_url;
+}
+
 function renderPending(){
   drawerFoot.hidden = pending.filter(function(p){ return p.status === "ready"; }).length < 2;
   reviewList.innerHTML = pending.map(pendingCardHtml).join("");
@@ -715,7 +780,7 @@ function renderPending(){
     if (saveBtn) saveBtn.addEventListener("click", function(){ saveOne(item); });
     if (discardBtn) discardBtn.addEventListener("click", function(){ removePending(item.uid); });
     if (item.status === "ready" && item.fields){
-      ["name","email","phone","yearsExperience","visaStatus","domain","resumeLink"].forEach(function(f){
+      ["name","email","phone","yearsExperience","visaStatus","domain","resumeLink","location"].forEach(function(f){
         const input = root.querySelector('[data-field="' + f + '"]');
         if (!input) return;
         input.addEventListener("input", function(){
@@ -751,6 +816,12 @@ function pendingCardHtml(item){
     const f = item.fields;
     const disabled = item.status === "saved" ? "disabled" : "";
     const dup = findDuplicateByName(f.name, null);
+    const resumeLinkLabel = (cloudinaryConfigured() && item.file)
+      ? "Resume link (leave blank to upload the file automatically)"
+      : "Resume link (optional — paste a Google Drive / Dropbox link)";
+    const resumeLinkPlaceholder = (cloudinaryConfigured() && item.file)
+      ? "Leave blank to auto-upload, or paste your own link"
+      : "https://drive.google.com/…";
     body =
       '<div class="field"><label>Name</label><input data-field="name" value="' + escapeHtml(f.name) + '" ' + disabled + '>' +
         '<div class="dup-warning" data-dup ' + (dup ? "" : "hidden") + '>' +
@@ -768,9 +839,15 @@ function pendingCardHtml(item){
           (f.yearsEstimated ? '<span class="field-note">Estimated from dates on the resume — please check.</span>' : "") +
         '</div>' +
       '</div>' +
-      '<div class="field"><label>Visa status</label><input data-field="visaStatus" value="' + escapeHtml(f.visaStatus) + '" ' + disabled + '></div>' +
+      '<div class="field-row">' +
+        '<div class="field"><label>Visa status</label><input data-field="visaStatus" value="' + escapeHtml(f.visaStatus) + '" ' + disabled + '></div>' +
+        '<div class="field"><label>Location</label><select data-field="location" ' + disabled + '>' +
+          '<option value="Onshore"' + (f.location !== "Offshore" ? " selected" : "") + '>Onshore</option>' +
+          '<option value="Offshore"' + (f.location === "Offshore" ? " selected" : "") + '>Offshore</option>' +
+        '</select></div>' +
+      '</div>' +
       '<div class="field"><label>Key skills (comma separated)</label><input data-field="skills" value="' + escapeHtml((f.skills||[]).join(", ")) + '" ' + disabled + '></div>' +
-      '<div class="field"><label>Resume link (optional — paste a Google Drive / Dropbox link)</label><input data-field="resumeLink" value="' + escapeHtml(f.resumeLink||"") + '" placeholder="https://drive.google.com/…" ' + disabled + '></div>';
+      '<div class="field"><label>' + resumeLinkLabel + '</label><input data-field="resumeLink" value="' + escapeHtml(f.resumeLink||"") + '" placeholder="' + resumeLinkPlaceholder + '" ' + disabled + '></div>';
   }
   const actions = item.status === "ready"
     ? '<div class="review-actions"><button class="btn btn-sm js-discard">Discard</button><button class="btn btn-sm btn-primary js-save">Save candidate</button></div>'
@@ -795,6 +872,18 @@ async function saveOne(item){
   const saveBtn = document.querySelector('[data-pending="' + item.uid + '"] .js-save');
   if (saveBtn){ saveBtn.disabled = true; saveBtn.textContent = "Saving…"; }
   try {
+    let resumeLink = item.fields.resumeLink || "";
+    // If no link was typed by hand and a file was uploaded, try to upload it
+    // automatically so the link fills itself in — non-fatal if it fails.
+    if (!resumeLink && item.file && cloudinaryConfigured()){
+      if (saveBtn) saveBtn.textContent = "Uploading resume…";
+      try {
+        resumeLink = await uploadResumeToCloudinary(item.file);
+      } catch (e){
+        toast("Couldn't auto-upload the resume file (" + (e.message || "unknown error") + ") — saved without a link.", "error");
+      }
+      if (saveBtn) saveBtn.textContent = "Saving…";
+    }
     const now = new Date().toISOString();
     const data = {
       name: item.fields.name || "",
@@ -805,8 +894,9 @@ async function saveOne(item){
       yearsEstimated: !!item.fields.yearsEstimated,
       visaStatus: item.fields.visaStatus || "",
       domain: item.fields.domain || "",
+      location: item.fields.location || "Onshore",
       resumeFilename: item.filename,
-      resumeLink: item.fields.resumeLink || "",
+      resumeLink: resumeLink,
       addedBy: (auth.currentUser && auth.currentUser.email) || "",
       createdAt: now,
       updatedAt: now
@@ -852,7 +942,13 @@ function openEdit(c){
         '<div class="field"><label>Domain</label><input id="editDomain" value="' + escapeHtml(c.domain) + '" placeholder="QA, Front End, .NET, Integration…"></div>' +
         '<div class="field"><label>Years experience</label><input id="editYears" value="' + escapeHtml(c.yearsExperience) + '"></div>' +
       '</div>' +
-      '<div class="field"><label>Visa status</label><input id="editVisa" value="' + escapeHtml(c.visaStatus) + '"></div>' +
+      '<div class="field-row">' +
+        '<div class="field"><label>Visa status</label><input id="editVisa" value="' + escapeHtml(c.visaStatus) + '"></div>' +
+        '<div class="field"><label>Location</label><select id="editLocation">' +
+          '<option value="Onshore"' + (c.location !== "Offshore" ? " selected" : "") + '>Onshore</option>' +
+          '<option value="Offshore"' + (c.location === "Offshore" ? " selected" : "") + '>Offshore</option>' +
+        '</select></div>' +
+      '</div>' +
       '<div class="field"><label>Key skills (comma separated)</label><input id="editSkills" value="' + escapeHtml((c.skills||[]).join(", ")) + '"></div>' +
       '<div class="field"><label>Resume link (optional)</label><input id="editResumeLink" value="' + escapeHtml(c.resumeLink||"") + '" placeholder="https://drive.google.com/…"></div>' +
     '</div>' +
@@ -890,6 +986,7 @@ function openEdit(c){
         yearsExperience: panel.querySelector("#editYears").value.trim(),
         visaStatus: panel.querySelector("#editVisa").value.trim(),
         domain: panel.querySelector("#editDomain").value.trim(),
+        location: panel.querySelector("#editLocation").value,
         skills: panel.querySelector("#editSkills").value.split(",").map(function(s){ return s.trim(); }).filter(Boolean),
         resumeLink: panel.querySelector("#editResumeLink").value.trim(),
         updatedAt: new Date().toISOString()
